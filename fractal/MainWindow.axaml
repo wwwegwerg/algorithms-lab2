@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="fractal.MainWindow"
+        Title="Fractal"
+        Width="1100" Height="720"
+        CanResize="True"
+        Background="#101014"
+        PointerWheelChanged="OnPointerWheelChanged"
+        PointerPressed="OnPointerPressed"
+        PointerMoved="OnPointerMoved"
+        PointerReleased="OnPointerReleased"
+        SizeChanged="OnSizeChanged">
+
+    <Grid ColumnDefinitions="*,300">
+        <Border Grid.Column="0" Background="#101014">
+            <Image x:Name="FractalImage"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   Stretch="Fill"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
+        </Border>
+
+        <Border x:Name="Sidebar"
+                Grid.Column="1"
+                Background="#20232B"
+                BorderThickness="0"
+                Padding="16">
+
+            <Border.Styles>
+                <Style Selector="TextBlock">
+                    <Setter Property="Foreground" Value="#F5F7FF" />
+                </Style>
+
+                <Style Selector="Button">
+                    <Setter Property="Background" Value="#2B2F3A" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#3B4152" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="Padding" Value="10,8" />
+                    <Setter Property="CornerRadius" Value="6" />
+                </Style>
+                <Style Selector="Button:pointerover">
+                    <Setter Property="Background" Value="#343A4A" />
+                </Style>
+                <Style Selector="Button:pressed">
+                    <Setter Property="Background" Value="#3D4253" />
+                </Style>
+
+                <Style Selector="NumericUpDown">
+                    <Setter Property="Background" Value="#262A33" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#3B4152" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="CornerRadius" Value="6" />
+                    <Setter Property="Padding" Value="6,4" />
+                    <Setter Property="Width" Value="150" />
+                </Style>
+            </Border.Styles>
+
+            <StackPanel Spacing="12">
+                <TextBlock Text="Панель управления" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Уровни:" VerticalAlignment="Center" Width="90" />
+                    <NumericUpDown x:Name="IterationsUpDown"
+                                   Minimum="1" Maximum="60" Increment="1"
+                                   Value="6" />
+
+                </StackPanel>
+
+                <Button x:Name="ResetButton" Content="Сбросить вид" Click="OnResetClicked" />
+
+                <Separator />
+
+                <TextBlock Text="Управление" FontWeight="Bold" />
+                <StackPanel>
+                    <TextBlock Text="Колесо — зум к курcору" />
+                    <TextBlock Text="ЛКМ + перетаскивание — панорама" />
+                </StackPanel>
+
+                <Separator />
+
+                <TextBlock Text="Статус" FontWeight="Bold" />
+                <TextBlock x:Name="InfoText" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
