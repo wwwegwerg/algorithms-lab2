@@ -1,77 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:towers.Views"
         x:Class="towers.MainWindow"
-        Width="900" Height="540"
-        MinWidth="720" MinHeight="420"
-        Title="Ханойские башни — авто-решение">
+        Width="980" Height="600"
+        Title="Ханойские башни">
 
-    <DockPanel LastChildFill="True" Margin="10">
-        <Border DockPanel.Dock="Top" Padding="10" CornerRadius="12"
-                Background="{DynamicResource SolidBackgroundBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <TextBlock Text="Диски:" VerticalAlignment="Center" />
-                <Slider x:Name="DiscSlider" Minimum="3" Maximum="8" Value="5"
-                        IsSnapToTickEnabled="True" TickFrequency="1" Width="180" />
-                <TextBlock Text="{Binding ElementName=DiscSlider, Path=Value, StringFormat={}🟣 {0:#}}"
-                           FontWeight="Bold" VerticalAlignment="Center" />
-
-                <Button Content="Новая игра" Click="OnNewGameClick" />
-                <Button Content="Решить" Click="OnSolveClick" />
-
-                <CheckBox x:Name="SlowCheck" Content="Медленно" IsChecked="True"
-                          Margin="8,0,0,0" VerticalAlignment="Center" />
-
-                <Separator Width="24" />
-
-                <TextBlock Text="Ходы:" VerticalAlignment="Center" />
-                <TextBlock x:Name="MovesText" FontWeight="Bold" VerticalAlignment="Center" />
-                <TextBlock x:Name="OptimalText" Foreground="Gray" VerticalAlignment="Center" Margin="6,0,0,0" />
-
-                <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
-        </Border>
-
-        <Grid ColumnDefinitions="*,*,*" Margin="6">
-            <Border Grid.Column="0" x:Name="PegHit0" Background="#0F000000" CornerRadius="12" Margin="8">
-                <Grid>
-                    <Border Width="8" Height="360" Background="#60404040"
-                            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
-                    <Border Height="14" Background="#80606060" CornerRadius="8"
-                            VerticalAlignment="Bottom" Margin="10,20,10,20" />
-                    <DockPanel x:Name="PegPanel0" LastChildFill="False"
-                               VerticalAlignment="Bottom" Margin="0,0,0,24" />
-                    <TextBlock Text="A" Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Top"
-                               Margin="0,8,0,0" />
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="1" x:Name="PegHit1" Background="#0F000000" CornerRadius="12" Margin="8">
-                <Grid>
-                    <Border Width="8" Height="360" Background="#60404040"
-                            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
-                    <Border Height="14" Background="#80606060" CornerRadius="8"
-                            VerticalAlignment="Bottom" Margin="10,20,10,20" />
-                    <DockPanel x:Name="PegPanel1" LastChildFill="False"
-                               VerticalAlignment="Bottom" Margin="0,0,0,24" />
-                    <TextBlock Text="B" Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Top"
-                               Margin="0,8,0,0" />
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2" x:Name="PegHit2" Background="#0F000000" CornerRadius="12" Margin="8">
-                <Grid>
-                    <Border Width="8" Height="360" Background="#60404040"
-                            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
-                    <Border Height="14" Background="#80606060" CornerRadius="8"
-                            VerticalAlignment="Bottom" Margin="10,20,10,20" />
-                    <DockPanel x:Name="PegPanel2" LastChildFill="False"
-                               VerticalAlignment="Bottom" Margin="0,0,0,24" />
-                    <TextBlock Text="C" Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Top"
-                               Margin="0,8,0,0" />
-                </Grid>
-            </Border>
-        </Grid>
-    </DockPanel>
+    <TabControl>
+        <TabItem Header="Игра">
+            <views:GameView />
+        </TabItem>
+        <TabItem Header="График">
+            <views:ChartView />
+        </TabItem>
+    </TabControl>
 </Window>

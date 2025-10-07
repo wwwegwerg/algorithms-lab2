@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
+             x:Class="towers.Views.ChartView">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml" />
+    </UserControl.Styles>
+
+    <Grid Margin="10">
+        <oxy:PlotView x:Name="Plot" MinHeight="320" />
+    </Grid>
+</UserControl>

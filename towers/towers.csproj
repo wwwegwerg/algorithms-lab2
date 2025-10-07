@@ -18,5 +18,17 @@
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="OxyPlot.Avalonia" Version="2.1.0-Avalonia11" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\ChartView.axaml.cs">
+        <DependentUpon>ChartView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\GameView.axaml.cs">
+        <DependentUpon>GameView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>
