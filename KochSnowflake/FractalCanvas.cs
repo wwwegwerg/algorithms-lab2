@@ -65,10 +65,8 @@ public class FractalCanvas : Control
         this.GetObservable(FitPaddingProperty).Subscribe(_ =>
         {
             if (!_viewInitialized)
-            {
                 // Паддинг поменяли до инициализации — отложим fit
                 return;
-            }
 
             UpdateMinScalePreserveView();
             InvalidateVisual();
@@ -199,12 +197,12 @@ public class FractalCanvas : Control
         using (var g = geo.Open())
         {
             var p0 = WorldToScreen(_world[0]);
-            g.BeginFigure(p0, isFilled: false);
+            g.BeginFigure(p0, false);
 
             for (var i = 1; i < _world.Count; i++)
                 g.LineTo(WorldToScreen(_world[i]));
 
-            g.EndFigure(isClosed: true);
+            g.EndFigure(true);
         }
 
         ctx.DrawGeometry(null, pen, geo);
@@ -286,6 +284,13 @@ public class FractalCanvas : Control
         return new Rect(minX, minY, Math.Max(1e-9, maxX - minX), Math.Max(1e-9, maxY - minY));
     }
 
-    private Point WorldToScreen(Point w) => new Point(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
-    private Point ScreenToWorld(Point s) => new Point((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
+    private Point WorldToScreen(Point w)
+    {
+        return new Point(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
+    }
+
+    private Point ScreenToWorld(Point s)
+    {
+        return new Point((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
+    }
 }

@@ -5,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Layout;
 
 namespace towers;
 
@@ -23,13 +25,13 @@ public partial class MainWindow : Window
         this.GetObservable(BoundsProperty).Subscribe(_ => RebuildAll());
     }
 
-    private void OnNewGameClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnNewGameClick(object? sender, RoutedEventArgs e)
     {
         if (_isSolving) _solverCts?.Cancel();
         NewGame((int)Math.Round(DiscSlider.Value));
     }
 
-    private async void OnSolveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void OnSolveClick(object? sender, RoutedEventArgs e)
     {
         if (_isSolving) return;
 
@@ -75,7 +77,10 @@ public partial class MainWindow : Window
         OptimalText.Text = $"(минимум: {optimal})";
     }
 
-    private void SetStatus(string text) => StatusText.Text = text;
+    private void SetStatus(string text)
+    {
+        StatusText.Text = text;
+    }
 
     private void DoMove(int from, int to)
     {
@@ -104,7 +109,7 @@ public partial class MainWindow : Window
         ct.ThrowIfCancellationRequested();
 
         // задержка по тоглу: медленно ~220мс, быстро ~40мс (достаточно, чтобы видеть движение и не фризить UI)
-        var delay = (SlowCheck?.IsChecked ?? false) ? 220 : 40;
+        var delay = SlowCheck?.IsChecked ?? false ? 220 : 40;
         await Task.Delay(delay, ct);
         DoMove(from, to);
 
@@ -123,7 +128,7 @@ public partial class MainWindow : Window
         panel.Children.Clear();
 
         var tower = _pegs[pegIndex];
-        var n = Math.Max(1, (int)Math.Round((double)DiscSlider.Value));
+        var n = Math.Max(1, (int)Math.Round(DiscSlider.Value));
         var areaWidth = Math.Max(100, hitBox.Bounds.Width);
         var minWidth = Math.Min(120, areaWidth * 0.28);
         var maxWidth = Math.Min(areaWidth - 28, areaWidth * 0.92);
@@ -140,7 +145,7 @@ public partial class MainWindow : Window
                 Width = width,
                 CornerRadius = new CornerRadius(10),
                 Margin = new Thickness(0, 2, 0, 2),
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
                 Background = MakeDiscBrush(size, n),
                 BorderBrush = new SolidColorBrush(Color.FromArgb(90, 0, 0, 0)),
                 BorderThickness = new Thickness(0)
@@ -167,13 +172,16 @@ public partial class MainWindow : Window
         return brush;
     }
 
-    private static Color WithAlpha(Color c, byte a) => Color.FromArgb(a, c.R, c.G, c.B);
+    private static Color WithAlpha(Color c, byte a)
+    {
+        return Color.FromArgb(a, c.R, c.G, c.B);
+    }
 
     private static Color HsvToRgb(double h, double s, double v)
     {
         h = (h % 360 + 360) % 360;
         var c = v * s;
-        var x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+        var x = c * (1 - Math.Abs(h / 60 % 2 - 1));
         var m = v - c;
 
         double r1, g1, b1;

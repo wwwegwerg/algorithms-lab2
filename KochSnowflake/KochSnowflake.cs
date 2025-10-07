@@ -16,7 +16,7 @@ public static class KochSnowflake
         var b = new Point(1, 0);
         var c = new Point(0.5, Math.Sqrt(3) / 2.0);
 
-        var pts = new List<Point>(capacity: 3 * (int)Math.Pow(4, Math.Max(iterations, 0)) + 1);
+        var pts = new List<Point>(3 * (int)Math.Pow(4, Math.Max(iterations, 0)) + 1);
 
         SubdivideEdge(a, b, iterations, pts);
         SubdivideEdge(b, c, iterations, pts);
