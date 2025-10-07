@@ -1,7 +1,8 @@
 ﻿using Avalonia;
 using System;
+using Avalonia.ReactiveUI;
 
-namespace fractal;
+namespace KochSnowflake;
 
 class Program
 {
@@ -16,5 +17,6 @@ class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .LogToTrace();
+            .LogToTrace()
+            .UseReactiveUI();
 }
