@@ -24,7 +24,7 @@ public partial class ChartView : UserControl
 
     private readonly LineSeries _series = new()
     {
-        Title = "Время, мкс",
+        Title = "Время, с",
         MarkerType = MarkerType.Circle,
         MarkerSize = 2,
         StrokeThickness = 2
@@ -47,7 +47,7 @@ public partial class ChartView : UserControl
         _model.Axes.Add(new LinearAxis
             { Position = AxisPosition.Bottom, Title = "Количество дисков", Minimum = double.NaN, Maximum = double.NaN });
         _model.Axes.Add(new LinearAxis
-            { Position = AxisPosition.Left, Title = "Время, мкс", Minimum = double.NaN, Maximum = double.NaN });
+            { Position = AxisPosition.Left, Title = "Время, с", Minimum = double.NaN, Maximum = double.NaN });
 
         _model.Series.Clear();
         _model.Series.Add(_series);
@@ -57,20 +57,23 @@ public partial class ChartView : UserControl
         this.GetObservable(IsVisibleProperty).Subscribe(visible =>
         {
             if (visible && !_hasResults && !_isMeasuring)
-                ComputeAndRenderBenchmark(DefaultPasses);
+                Benchmark(DefaultPasses);
         });
 
         if (IsVisible && !_hasResults && !_isMeasuring)
-            ComputeAndRenderBenchmark(DefaultPasses);
+            Benchmark(DefaultPasses);
     }
 
-    private void ComputeAndRenderBenchmark(int passesPerN)
+    private void Benchmark(int passesPerN)
     {
         if (_isMeasuring) return;
         _isMeasuring = true;
 
         try
         {
+            Console.WriteLine($"Started at {DateTime.Now.TimeOfDay}");
+            var globalSw = Stopwatch.StartNew();
+            
             var pts = new List<DataPoint>(MaxN - MinN + 1);
 
             for (var n = MinN; n <= MaxN; n++)
@@ -87,9 +90,13 @@ public partial class ChartView : UserControl
                 }
 
                 sw.Stop();
-                var avgUs = sw.Elapsed.TotalMicroseconds / passesPerN;
+                var avgUs = sw.Elapsed.TotalSeconds / passesPerN;
                 pts.Add(new DataPoint(n, avgUs));
             }
+            
+            globalSw.Stop();
+            Console.WriteLine($"Completed at {DateTime.Now.TimeOfDay}");
+            Console.WriteLine($"Total time: {globalSw.Elapsed.TotalSeconds}");
 
             _series.ItemsSource = pts;
             _model.ResetAllAxes();
