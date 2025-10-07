@@ -1,12 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="towers.MainWindow"
         Width="900" Height="540"
         MinWidth="720" MinHeight="420"
-        Title="Ханойские башни">
+        Title="Ханойские башни — авто-решение">
 
     <DockPanel LastChildFill="True" Margin="10">
-        <!-- Панель управления -->
         <Border DockPanel.Dock="Top" Padding="10" CornerRadius="12"
                 Background="{DynamicResource SolidBackgroundBrush}">
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
@@ -18,8 +19,9 @@
 
                 <Button Content="Новая игра" Click="OnNewGameClick" />
                 <Button Content="Решить" Click="OnSolveClick" />
+
                 <CheckBox x:Name="SlowCheck" Content="Медленно" IsChecked="True"
-                          ToolTip.Tip="Замедлить анимацию решателя" />
+                          Margin="8,0,0,0" VerticalAlignment="Center" />
 
                 <Separator Width="24" />
 
@@ -27,26 +29,17 @@
                 <TextBlock x:Name="MovesText" FontWeight="Bold" VerticalAlignment="Center" />
                 <TextBlock x:Name="OptimalText" Foreground="Gray" VerticalAlignment="Center" Margin="6,0,0,0" />
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" />
-                </StackPanel>
+                <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
         </Border>
 
-        <!-- Игровое поле -->
         <Grid ColumnDefinitions="*,*,*" Margin="6">
-            <!-- Колонка A -->
-            <Border Grid.Column="0" x:Name="PegHit0" Tag="0"
-                    Background="#0F000000" CornerRadius="12" Margin="8"
-                    PointerPressed="Peg_PointerPressed">
+            <Border Grid.Column="0" x:Name="PegHit0" Background="#0F000000" CornerRadius="12" Margin="8">
                 <Grid>
-                    <!-- Стойка -->
                     <Border Width="8" Height="360" Background="#60404040"
                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
-                    <!-- Основание -->
                     <Border Height="14" Background="#80606060" CornerRadius="8"
                             VerticalAlignment="Bottom" Margin="10,20,10,20" />
-                    <!-- Стек дисков (рисуется из кода) -->
                     <DockPanel x:Name="PegPanel0" LastChildFill="False"
                                VerticalAlignment="Bottom" Margin="0,0,0,24" />
                     <TextBlock Text="A" Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Top"
@@ -54,10 +47,7 @@
                 </Grid>
             </Border>
 
-            <!-- Колонка B -->
-            <Border Grid.Column="1" x:Name="PegHit1" Tag="1"
-                    Background="#0F000000" CornerRadius="12" Margin="8"
-                    PointerPressed="Peg_PointerPressed">
+            <Border Grid.Column="1" x:Name="PegHit1" Background="#0F000000" CornerRadius="12" Margin="8">
                 <Grid>
                     <Border Width="8" Height="360" Background="#60404040"
                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
@@ -70,10 +60,7 @@
                 </Grid>
             </Border>
 
-            <!-- Колонка C -->
-            <Border Grid.Column="2" x:Name="PegHit2" Tag="2"
-                    Background="#0F000000" CornerRadius="12" Margin="8"
-                    PointerPressed="Peg_PointerPressed">
+            <Border Grid.Column="2" x:Name="PegHit2" Background="#0F000000" CornerRadius="12" Margin="8">
                 <Grid>
                     <Border Width="8" Height="360" Background="#60404040"
                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" />
