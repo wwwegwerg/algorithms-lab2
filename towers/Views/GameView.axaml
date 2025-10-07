@@ -8,7 +8,7 @@
                 <TextBlock Text="Диски:" VerticalAlignment="Center" />
                 <Slider x:Name="DiscSlider" Minimum="3" Maximum="8" Value="5"
                         IsSnapToTickEnabled="True" TickFrequency="1" Width="180" />
-                <TextBlock Text="{Binding ElementName=DiscSlider, Path=Value, StringFormat={}🟣 {0:#}}"
+                <TextBlock Text="{Binding ElementName=DiscSlider, Path=Value, StringFormat={}{0:#}}"
                            FontWeight="Bold" VerticalAlignment="Center" />
 
                 <Button Content="Новая игра" Click="OnNewGameClick" />

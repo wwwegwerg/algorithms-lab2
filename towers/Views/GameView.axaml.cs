@@ -12,27 +12,24 @@ namespace towers.Views;
 
 public partial class GameView : UserControl
 {
-    // --- UI refs (через FindControl) ---
     private Slider? _discSlider;
     private CheckBox? _slowCheck;
     private TextBlock? _movesText, _optimalText, _statusText;
     private Border? _pegHit0, _pegHit1, _pegHit2;
     private DockPanel? _pegPanel0, _pegPanel1, _pegPanel2;
 
-    // --- state ---
-    private readonly List<List<int>> _pegs = [new(), new(), new()];
+    private readonly List<List<int>> _pegs = [[], [], []];
     private int _moves;
     private CancellationTokenSource? _cts;
 
     public GameView()
     {
-        AvaloniaXamlLoader.Load(this); // <- вместо InitializeComponent()
-        AttachedToVisualTree += OnAttached; // берём ссылки на элементы, когда контрол оказался в визуальном дереве
+        AvaloniaXamlLoader.Load(this);
+        AttachedToVisualTree += OnAttached;
     }
 
     private void OnAttached(object? s, VisualTreeAttachmentEventArgs e)
     {
-        // resolve controls by x:Name
         _discSlider = this.FindControl<Slider>("DiscSlider");
         _slowCheck = this.FindControl<CheckBox>("SlowCheck");
         _movesText = this.FindControl<TextBlock>("MovesText");
@@ -46,26 +43,20 @@ public partial class GameView : UserControl
         _pegPanel1 = this.FindControl<DockPanel>("PegPanel1");
         _pegPanel2 = this.FindControl<DockPanel>("PegPanel2");
 
-        // пересборка при ресайзе
         this.GetObservable(BoundsProperty).Subscribe(_ => RebuildAll());
 
         NewGame((int)Math.Round(_discSlider?.Value ?? 5));
     }
 
-    // wired from XAML
     private void OnNewGameClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         NewGame((int)Math.Round(_discSlider?.Value ?? 5));
 
-    // wired from XAML
-    // 1) Принудительно начинаем с чистого старта перед решением
     private async void OnSolveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_cts != null) return;
 
         var n = (int)Math.Round(_discSlider?.Value ?? 5);
 
-        // ВАЖНО: сбросить поле в исходное состояние под текущее n,
-        // иначе ходы не соответствуют реальному состоянию башен.
         NewGame(n);
 
         var moves = HanoiSolver.GenerateMoves(n, 0, 2, 1);
@@ -119,17 +110,13 @@ public partial class GameView : UserControl
         if (_statusText != null) _statusText.Text = text;
     }
 
-    // 2) Защита в DoMove
     private void DoMove(int from, int to)
     {
-        // границы индексов
         if (from < 0 || from > 2 || to < 0 || to > 2) return;
 
         var source = _pegs[from];
         var target = _pegs[to];
 
-        // если источник пуст — это признак несоответствия состояния и хода;
-        // просто игнорируем, чтобы не падать (но при корректном запуске через NewGame это не произойдёт)
         if (source.Count == 0)
         {
             SetStatus("Попытка хода с пустой башни — пропущено.");
@@ -169,9 +156,8 @@ public partial class GameView : UserControl
         var step = (maxWidth - minWidth) / Math.Max(1, n - 1);
         var discHeight = 26.0;
 
-        for (var i = 0; i < tower.Count; i++)
+        foreach (var size in tower)
         {
-            var size = tower[i];
             var width = minWidth + (size - 1) * step;
 
             var border = new Border
@@ -193,7 +179,7 @@ public partial class GameView : UserControl
 
     private static IBrush MakeDiscBrush(int size, int n)
     {
-        double t = (double)(size - 1) / Math.Max(1, n - 1);
+        var t = (double)(size - 1) / Math.Max(1, n - 1);
         var baseColor = HsvToRgb(220 * (1 - t) + 20 * t, 0.65, 0.9);
 
         var brush = new LinearGradientBrush
@@ -209,11 +195,11 @@ public partial class GameView : UserControl
     private static Color HsvToRgb(double h, double s, double v)
     {
         h = (h % 360 + 360) % 360;
-        double c = v * s;
-        double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
-        double m = v - c;
+        var c = v * s;
+        var x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+        var m = v - c;
 
-        double r1 = 0, g1 = 0, b1 = 0;
+        double r1, g1, b1;
         if (h < 60) (r1, g1, b1) = (c, x, 0);
         else if (h < 120) (r1, g1, b1) = (x, c, 0);
         else if (h < 180) (r1, g1, b1) = (0, c, x);
@@ -221,9 +207,9 @@ public partial class GameView : UserControl
         else if (h < 300) (r1, g1, b1) = (x, 0, c);
         else (r1, g1, b1) = (c, 0, x);
 
-        byte R = (byte)Math.Round((r1 + m) * 255);
-        byte G = (byte)Math.Round((g1 + m) * 255);
-        byte B = (byte)Math.Round((b1 + m) * 255);
+        var R = (byte)Math.Round((r1 + m) * 255);
+        var G = (byte)Math.Round((g1 + m) * 255);
+        var B = (byte)Math.Round((b1 + m) * 255);
         return Color.FromRgb(R, G, B);
     }
 }
