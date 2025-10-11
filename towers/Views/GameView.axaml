@@ -14,8 +14,8 @@
                 <Button Content="Новая игра" Click="OnNewGameClick" />
                 <Button Content="Решить" Click="OnSolveClick" />
 
-                <CheckBox x:Name="SlowCheck" Content="Медленно" IsChecked="True"
-                          Margin="8,0,0,0" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="AnimSwitch" Content="Анимация" IsChecked="True"
+                              Margin="8,0,0,0" VerticalAlignment="Center" />
 
                 <Separator Width="24" />
 
@@ -66,6 +66,10 @@
                                Margin="0,8,0,0" />
                 </Grid>
             </Border>
+
+            <Canvas x:Name="Overlay" Grid.ColumnSpan="3" Grid.Column="0" IsHitTestVisible="False"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    ZIndex="1000" />
         </Grid>
     </DockPanel>
 </UserControl>

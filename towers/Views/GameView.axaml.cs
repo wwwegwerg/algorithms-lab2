@@ -7,20 +7,27 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Styling;
 
 namespace towers.Views;
 
 public partial class GameView : UserControl
 {
     private Slider? _discSlider;
-    private CheckBox? _slowCheck;
+    private ToggleSwitch? _animSwitch;
     private TextBlock? _movesText, _optimalText, _statusText;
     private Border? _pegHit0, _pegHit1, _pegHit2;
     private DockPanel? _pegPanel0, _pegPanel1, _pegPanel2;
+    private Canvas? _overlay;
 
-    private readonly List<List<int>> _pegs = [[], [], []];
+    private readonly List<List<int>> _pegs = [new(), new(), new()];
     private int _moves;
     private CancellationTokenSource? _cts;
+
+    private const double DiscHeight = 26.0;
+    private const double DiscMarginV = 4.0; // Margin(Top=2, Bottom=2) => суммарно 4
 
     public GameView()
     {
@@ -31,7 +38,7 @@ public partial class GameView : UserControl
     private void OnAttached(object? s, VisualTreeAttachmentEventArgs e)
     {
         _discSlider = this.FindControl<Slider>("DiscSlider");
-        _slowCheck = this.FindControl<CheckBox>("SlowCheck");
+        _animSwitch = this.FindControl<ToggleSwitch>("AnimSwitch");
         _movesText = this.FindControl<TextBlock>("MovesText");
         _optimalText = this.FindControl<TextBlock>("OptimalText");
         _statusText = this.FindControl<TextBlock>("StatusText");
@@ -43,8 +50,9 @@ public partial class GameView : UserControl
         _pegPanel1 = this.FindControl<DockPanel>("PegPanel1");
         _pegPanel2 = this.FindControl<DockPanel>("PegPanel2");
 
-        this.GetObservable(BoundsProperty).Subscribe(_ => RebuildAll());
+        _overlay = this.FindControl<Canvas>("Overlay");
 
+        this.GetObservable(BoundsProperty).Subscribe(_ => RebuildAll());
         NewGame((int)Math.Round(_discSlider?.Value ?? 5));
     }
 
@@ -56,7 +64,6 @@ public partial class GameView : UserControl
         if (_cts != null) return;
 
         var n = (int)Math.Round(_discSlider?.Value ?? 5);
-
         NewGame(n);
 
         var moves = HanoiSolver.GenerateMoves(n, 0, 2, 1);
@@ -65,13 +72,19 @@ public partial class GameView : UserControl
         try
         {
             SetStatus("Решаю…");
-            var delay = (_slowCheck?.IsChecked ?? false) ? 220 : 40;
+            var useAnim = _animSwitch?.IsChecked != false;
 
             foreach (var (from, to) in moves)
             {
                 _cts.Token.ThrowIfCancellationRequested();
-                await Task.Delay(delay, _cts.Token);
-                DoMove(from, to);
+
+                if (useAnim)
+                    await AnimateMoveAsync(from, to, _cts.Token);
+                else
+                {
+                    DoMove(from, to);
+                    await Task.Delay(300, _cts.Token);
+                }
             }
 
             SetStatus("Готово!");
@@ -91,7 +104,7 @@ public partial class GameView : UserControl
     {
         _cts?.Cancel();
         foreach (var p in _pegs) p.Clear();
-        for (int size = discs; size >= 1; size--) _pegs[0].Add(size);
+        for (var size = discs; size >= 1; size--) _pegs[0].Add(size);
 
         _moves = 0;
         if (_movesText != null) _movesText.Text = "0";
@@ -110,18 +123,121 @@ public partial class GameView : UserControl
         if (_statusText != null) _statusText.Text = text;
     }
 
+    private async Task AnimateMoveAsync(int from, int to, CancellationToken ct)
+    {
+        if (_overlay == null)
+        {
+            DoMove(from, to);
+            return;
+        }
+
+        if (from < 0 || from > 2 || to < 0 || to > 2) return;
+
+        var source = _pegs[from];
+        var target = _pegs[to];
+        if (source.Count == 0) return;
+
+        var size = source[^1];
+
+        var sourceCountBefore = source.Count;
+        var targetCountBefore = target.Count;
+
+        var (srcCenterX, srcBaseY) = PegCenterAndBaseY(from);
+        var (dstCenterX, dstBaseY) = PegCenterAndBaseY(to);
+
+        var (minW, maxW, step) = DiscWidthParamsForPeg(from);
+        var width = minW + (size - 1) * step;
+
+        var x0 = srcCenterX - width / 2.0;
+        var x1 = dstCenterX - width / 2.0;
+
+        var y0 = srcBaseY - DiscHeight - (sourceCountBefore - 1) * (DiscHeight + DiscMarginV);
+        var y1 = dstBaseY - DiscHeight - (targetCountBefore) * (DiscHeight + DiscMarginV);
+
+        var dx = Math.Abs(dstCenterX - srcCenterX);
+        var arc = Math.Clamp(dx * 0.35, 60, 180);
+
+        source.RemoveAt(source.Count - 1);
+        RebuildAll();
+
+        var ghost = new Border
+        {
+            Width = width,
+            Height = DiscHeight,
+            CornerRadius = new CornerRadius(10),
+            Background = MakeDiscBrush(size, Math.Max(1, (int)Math.Round(_discSlider?.Value ?? 5))),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(90, 0, 0, 0)),
+            BorderThickness = new Thickness(0)
+        };
+        Canvas.SetLeft(ghost, x0);
+        Canvas.SetTop(ghost, y0);
+        _overlay.Children.Add(ghost);
+
+        var tList = new[] { 0.0, 0.25, 0.5, 0.75, 1.0 };
+        var anim = new Animation
+        {
+            Duration = TimeSpan.FromMilliseconds(500),
+            Easing = new SineEaseInOut(),
+            FillMode = FillMode.Forward
+        };
+
+        foreach (var t in tList)
+        {
+            var x = Lerp(x0, x1, t);
+            var y = Lerp(y0, y1, t) - arc * 4 * t * (1 - t);
+
+            anim.Children.Add(new KeyFrame
+            {
+                Cue = new Cue(t),
+                Setters =
+                {
+                    new Setter(Canvas.LeftProperty, x),
+                    new Setter(Canvas.TopProperty, y)
+                }
+            });
+        }
+
+        await anim.RunAsync(ghost, ct);
+
+        target.Add(size);
+        _moves++;
+        _movesText!.Text = _moves.ToString();
+
+        RebuildAll();
+        _overlay.Children.Remove(ghost);
+    }
+
+
+    private static double Lerp(double a, double b, double t) => a + (b - a) * t;
+
+    private (double centerX, double baseY) PegCenterAndBaseY(int peg)
+    {
+        Border? hit = peg switch { 0 => _pegHit0, 1 => _pegHit1, _ => _pegHit2 };
+        if (hit == null || _overlay == null) return (0, 0);
+
+        var local = new Point(hit.Bounds.Width / 2, hit.Bounds.Bottom - 40);
+        var pt = hit.TranslatePoint(local, _overlay) ?? new Point(0, 0);
+        return (pt.X, pt.Y);
+    }
+
+    private (double minW, double maxW, double step) DiscWidthParamsForPeg(int peg)
+    {
+        var hit = peg switch { 0 => _pegHit0, 1 => _pegHit1, _ => _pegHit2 };
+        var areaWidth = Math.Max(100, hit?.Bounds.Width ?? 200);
+        var minW = Math.Min(120, areaWidth * 0.28);
+        var maxW = Math.Min(areaWidth - 28, areaWidth * 0.92);
+        var n = Math.Max(1, (int)Math.Round(_discSlider?.Value ?? 5));
+        var step = (maxW - minW) / Math.Max(1, n - 1);
+        return (minW, maxW, step);
+    }
+
     private void DoMove(int from, int to)
     {
         if (from < 0 || from > 2 || to < 0 || to > 2) return;
 
         var source = _pegs[from];
         var target = _pegs[to];
-
-        if (source.Count == 0)
-        {
-            SetStatus("Попытка хода с пустой башни — пропущено.");
-            return;
-        }
+        if (source.Count == 0) return;
 
         var moving = source[^1];
         if (target.Count != 0 && target[^1] < moving)
@@ -136,16 +252,15 @@ public partial class GameView : UserControl
 
     private void RebuildAll()
     {
-        if (_pegHit0 == null || _pegHit1 == null || _pegHit2 == null ||
-            _pegPanel0 == null || _pegPanel1 == null || _pegPanel2 == null) return;
-
         RebuildPeg(0, _pegHit0, _pegPanel0);
         RebuildPeg(1, _pegHit1, _pegPanel1);
         RebuildPeg(2, _pegHit2, _pegPanel2);
     }
 
-    private void RebuildPeg(int pegIndex, Border hitBox, DockPanel panel)
+    private void RebuildPeg(int pegIndex, Border? hitBox, DockPanel? panel)
     {
+        if (hitBox == null || panel == null) return;
+
         panel.Children.Clear();
 
         var tower = _pegs[pegIndex];
@@ -154,7 +269,6 @@ public partial class GameView : UserControl
         var minWidth = Math.Min(120, areaWidth * 0.28);
         var maxWidth = Math.Min(areaWidth - 28, areaWidth * 0.92);
         var step = (maxWidth - minWidth) / Math.Max(1, n - 1);
-        var discHeight = 26.0;
 
         foreach (var size in tower)
         {
@@ -162,7 +276,7 @@ public partial class GameView : UserControl
 
             var border = new Border
             {
-                Height = discHeight,
+                Height = DiscHeight,
                 Width = width,
                 CornerRadius = new CornerRadius(10),
                 Margin = new Thickness(0, 2, 0, 2),
