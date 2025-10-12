@@ -13,20 +13,32 @@ public class FractalCanvas : Control
     private List<Point> _world = [];
     private Rect _boundsWorld;
 
-    private double _scale = 1.0; // текущий масштаб (world -> screen)
+    private double _scale = 1.0;
     private double _minScale = 1.0;
-    private Vector _offset; // смещение в экранных координатах
-
+    private Vector _offset;
+    private bool _viewInitialized;
     private bool _panning;
     private Point _last;
 
     private int _iterations = 4;
-    private bool _viewInitialized; // уже выполнялся первичный fit
+
+    // Базовая фигура: число сторон (3..10)
+    private static readonly StyledProperty<int> BaseSidesProperty =
+        AvaloniaProperty.Register<FractalCanvas, int>(nameof(BaseSides), 3);
+
+    public int BaseSides
+    {
+        get => GetValue(BaseSidesProperty);
+        set => SetValue(BaseSidesProperty, Math.Clamp(value, 3, 10));
+    }
+
+    // Генератор (локальные координаты 0..1 по X)
+    private List<Point> _generator = DefaultKochGenerator();
 
     public event EventHandler? ViewChanged;
     public event EventHandler? IterationsChanged;
+    public event EventHandler? GeneratorChanged;
 
-    // Внутренний отступ при вписывании
     public static readonly StyledProperty<double> FitPaddingProperty =
         AvaloniaProperty.Register<FractalCanvas, double>(nameof(FitPadding), 16.0);
 
@@ -41,15 +53,13 @@ public class FractalCanvas : Control
         Focusable = true;
         ClipToBounds = true;
 
-        // Пересчёт minScale/offset при изменении размеров и padding — БЕЗ сброса вида
+        // Изменение размеров
         this.GetObservable(BoundsProperty).Subscribe(_ =>
         {
-            // Если размеров ещё нет — ничего не делаем
             if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
 
             if (!_viewInitialized)
             {
-                // Первый раз — полноценное вписывание
                 FitToView();
                 _viewInitialized = true;
             }
@@ -64,33 +74,34 @@ public class FractalCanvas : Control
 
         this.GetObservable(FitPaddingProperty).Subscribe(_ =>
         {
-            if (!_viewInitialized)
-                // Паддинг поменяли до инициализации — отложим fit
-                return;
-
+            if (!_viewInitialized) return;
             UpdateMinScalePreserveView();
             InvalidateVisual();
             ViewChanged?.Invoke(this, EventArgs.Empty);
         });
 
-        Regenerate();
-    }
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-
-        // Гарантированный fit ПОСЛЕ того, как лэйаут посчитает размеры
-        Dispatcher.UIThread.Post(() =>
+        // Количество сторон — перестроить мир, вид не сбрасывать
+        this.GetObservable(BaseSidesProperty).Subscribe(_ =>
         {
-            if (_viewInitialized) return;
-            if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
-
-            FitToView();
-            _viewInitialized = true;
+            RebuildWorld(preserveView: true);
             InvalidateVisual();
             ViewChanged?.Invoke(this, EventArgs.Empty);
-        }, DispatcherPriority.Background);
+        });
+
+        RebuildWorld();
+
+        AttachedToVisualTree += (_, _) =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_viewInitialized) return;
+                if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
+                FitToView();
+                _viewInitialized = true;
+                InvalidateVisual();
+                ViewChanged?.Invoke(this, EventArgs.Empty);
+            }, DispatcherPriority.Background);
+        };
     }
 
     public int Iterations
@@ -101,15 +112,25 @@ public class FractalCanvas : Control
             var v = Math.Clamp(value, 0, 7);
             if (v == _iterations) return;
             _iterations = v;
-            Regenerate(); // пересчитать геометрию (вид не сбрасываем)
+            RebuildWorld(preserveView: true);
             IterationsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    /// <summary>Zoom = 1.0 соответствует виду «вся снежинка вписана с учётом FitPadding».</summary>
     public double ZoomFactor => _minScale > 0 ? _scale / _minScale : 1.0;
-
     public int VertexCount => _world.Count - 1;
+    public int GeneratorSegments => Math.Max(0, _generator.Count - 1);
+
+    public void SetGenerator(List<Point> normalizedGenerator)
+    {
+        // if (normalizedGenerator == null || normalizedGenerator.Count < 2)
+        //     return;
+        if (normalizedGenerator.Count < 2) return;
+
+        _generator = normalizedGenerator;
+        RebuildWorld(preserveView: true);
+        GeneratorChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void ResetView()
     {
@@ -152,18 +173,13 @@ public class FractalCanvas : Control
         if (_world.Count == 0) return;
 
         var sp = e.GetPosition(this);
-
-        // Мировая точка под курсором ДО зума
         var worldAtCursor = ScreenToWorld(sp);
 
-        // Новый масштаб (не меньше минимального)
         var factor = Math.Pow(1.1, e.Delta.Y);
         var newScale = Math.Max(_minScale, _scale * factor);
         if (Math.Abs(newScale - _scale) < 1e-9) return;
 
         _scale = newScale;
-
-        // Та же мировая точка остаётся под курсором ПОСЛЕ зума
         _offset = new Vector(
             sp.X - worldAtCursor.X * _scale,
             sp.Y - worldAtCursor.Y * _scale
@@ -178,47 +194,111 @@ public class FractalCanvas : Control
     {
         base.Render(ctx);
 
-        // Фон
         ctx.FillRectangle(Brushes.White, new Rect(Bounds.Size));
-
         if (_world.Count < 2) return;
 
-        // Если по каким-то причинам первичный fit ещё не выполнен, сделаем подстраховку
         if (!_viewInitialized && Bounds.Width > 0 && Bounds.Height > 0)
         {
             FitToView();
             _viewInitialized = true;
         }
 
-        // Чёрная линия, ~1px
         var pen = new Pen(Brushes.Black, 1.0, lineCap: PenLineCap.Round);
 
         var geo = new StreamGeometry();
         using (var g = geo.Open())
         {
             var p0 = WorldToScreen(_world[0]);
-            g.BeginFigure(p0, false);
+            g.BeginFigure(p0, isFilled: false);
 
             for (var i = 1; i < _world.Count; i++)
                 g.LineTo(WorldToScreen(_world[i]));
 
-            g.EndFigure(true);
+            g.EndFigure(isClosed: true);
         }
 
         ctx.DrawGeometry(null, pen, geo);
     }
 
-    private void Regenerate()
+    // Построение
+    private void RebuildWorld(bool preserveView = false)
     {
-        _world = KochSnowflake.Generate(_iterations);
+        _world = BuildSnowflake(_iterations, BaseSides);
         _boundsWorld = ComputeBounds(_world);
 
-        // Вид не трогаем; пересчитаем только минимальный масштаб и при необходимости
-        // мягко подтянем текущий масштаб, сохранив точку в центре экрана.
-        UpdateMinScalePreserveView();
+        if (!preserveView || !_viewInitialized)
+            FitToView();
+        else
+            UpdateMinScalePreserveView();
 
         InvalidateVisual();
-        ViewChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private List<Point> BuildSnowflake(int iterations, int sides)
+    {
+        var poly = BuildRegularPolygon(sides);
+        var gSeg = Math.Max(1, GeneratorSegments);
+
+        var pts = new List<Point>(capacity: sides * (int)Math.Pow(gSeg, Math.Max(0, iterations)) + 1);
+
+        for (var i = 0; i < poly.Count; i++)
+        {
+            var a = poly[i];
+            var b = poly[(i + 1) % poly.Count];
+            ExpandEdge(a, b, iterations, pts);
+        }
+
+        // замкнуть
+        pts.Add(poly[0]);
+        return pts;
+    }
+
+    private void ExpandEdge(Point a, Point b, int depth, List<Point> output)
+    {
+        if (depth == 0)
+        {
+            output.Add(a);
+            return;
+        }
+
+        var segs = TransformGeneratorToSegment(a, b, _generator);
+        for (var i = 0; i < segs.Count - 1; i++)
+            ExpandEdge(segs[i], segs[i + 1], depth - 1, output);
+    }
+
+    private static List<Point> TransformGeneratorToSegment(Point a, Point b, IReadOnlyList<Point> gen)
+    {
+        double dx = b.X - a.X, dy = b.Y - a.Y;
+        var len = Math.Sqrt(dx * dx + dy * dy);
+        if (len < 1e-12) len = 1e-12;
+        double cos = dx / len, sin = dy / len;
+
+        var res = new List<Point>(gen.Count);
+        foreach (var g in gen)
+        {
+            var x = g.X * len;
+            var y = g.Y * len;
+            var xr = x * cos - y * sin;
+            var yr = x * sin + y * cos;
+            res.Add(new Point(a.X + xr, a.Y + yr));
+        }
+
+        return res;
+    }
+
+    private static List<Point> BuildRegularPolygon(int sides)
+    {
+        sides = Math.Clamp(sides, 3, 10);
+        const double R = 1.0; // радиус описанной окружности
+        var start = -Math.PI / 2.0; // «вершина вверх»
+        var list = new List<Point>(sides);
+        for (var i = 0; i < sides; i++)
+        {
+            var ang = start + 2 * Math.PI * i / sides; // CCW
+            list.Add(new Point(R * Math.Cos(ang), R * Math.Sin(ang)));
+        }
+
+        return list;
     }
 
     private void FitToView()
@@ -248,15 +328,6 @@ public class FractalCanvas : Control
         var vh = Math.Max(1, Bounds.Height - 2 * pad);
         var newMin = Math.Min(vw / _boundsWorld.Width, vh / _boundsWorld.Height);
 
-        // Если первый раз — нормальный fit
-        if (!_viewInitialized)
-        {
-            FitToView();
-            _viewInitialized = true;
-            return;
-        }
-
-        // Сохраним мировую точку в центре экрана
         var centerScreen = new Point(Bounds.Width / 2.0, Bounds.Height / 2.0);
         var worldAtCenter = ScreenToWorld(centerScreen);
 
@@ -284,13 +355,20 @@ public class FractalCanvas : Control
         return new Rect(minX, minY, Math.Max(1e-9, maxX - minX), Math.Max(1e-9, maxY - minY));
     }
 
-    private Point WorldToScreen(Point w)
-    {
-        return new Point(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
-    }
+    private Point WorldToScreen(Point w) => new(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
+    private Point ScreenToWorld(Point s) => new((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
 
-    private Point ScreenToWorld(Point s)
+    private static List<Point> DefaultKochGenerator()
     {
-        return new Point((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
+        // Классический "наружу" для CCW: "бугор" справа (локальная Y < 0)
+        var h = Math.Sqrt(3) / 6.0;
+        return
+        [
+            new Point(0, 0),
+            new Point(1.0 / 3.0, 0),
+            new Point(0.5, -h),
+            new Point(2.0 / 3.0, 0),
+            new Point(1, 0)
+        ];
     }
 }

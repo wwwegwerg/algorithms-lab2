@@ -14,7 +14,7 @@ namespace towers.Views;
 public partial class ChartView : UserControl
 {
     private const int MinN = 1;
-    private const int MaxN = 30;
+    private const int MaxN = 30; // 35 => 8 с небольшим минут
 
     private const int DefaultPasses = 5;
 
@@ -45,7 +45,9 @@ public partial class ChartView : UserControl
 
         _model.Axes.Clear();
         _model.Axes.Add(new LinearAxis
-            { Position = AxisPosition.Bottom, Title = "Количество дисков", Minimum = double.NaN, Maximum = double.NaN });
+        {
+            Position = AxisPosition.Bottom, Title = "Количество дисков", Minimum = double.NaN, Maximum = double.NaN
+        });
         _model.Axes.Add(new LinearAxis
             { Position = AxisPosition.Left, Title = "Время, с", Minimum = double.NaN, Maximum = double.NaN });
 
@@ -73,7 +75,7 @@ public partial class ChartView : UserControl
         {
             Console.WriteLine($"Started at {DateTime.Now.TimeOfDay}");
             var globalSw = Stopwatch.StartNew();
-            
+
             var pts = new List<DataPoint>(MaxN - MinN + 1);
 
             for (var n = MinN; n <= MaxN; n++)
@@ -93,7 +95,7 @@ public partial class ChartView : UserControl
                 var avgUs = sw.Elapsed.TotalSeconds / passesPerN;
                 pts.Add(new DataPoint(n, avgUs));
             }
-            
+
             globalSw.Stop();
             Console.WriteLine($"Completed at {DateTime.Now.TimeOfDay}");
             Console.WriteLine($"Total time: {globalSw.Elapsed.TotalSeconds}");

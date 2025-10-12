@@ -13,6 +13,12 @@
                              FitPadding="24" />
 
         <Border Grid.Column="1" Background="{DynamicResource ThemeControlLowBrush}" Padding="16">
+            <Border.Styles>
+                <Style Selector="TextBlock">
+                    <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+                </Style>
+            </Border.Styles>
+
             <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="12">
 
@@ -25,25 +31,59 @@
                                        Increment="1" />
                     </StackPanel>
 
+                    <StackPanel>
+                        <TextBlock Text="Количество сторон (база)" Margin="0,8,0,6" />
+                        <NumericUpDown x:Name="SidesUpDown"
+                                       Minimum="3" Maximum="10" Value="3"
+                                       Increment="1" />
+                    </StackPanel>
+
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button x:Name="ResetBtn" Content="Сброс вида" />
                     </StackPanel>
 
-                    <Separator />
+                    <TextBlock Text="Пользовательский алгоритм (L-система)" FontWeight="Bold" />
+                    <StackPanel Spacing="6">
+                        <CheckBox x:Name="UseCustomGen" Content="Использовать пользовательский генератор" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock VerticalAlignment="Center" Text="Аксиома:" Width="70" />
+                            <TextBox x:Name="AxiomBox" Text="F" Width="160" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock VerticalAlignment="Center" Text="Угол (°):" Width="70" />
+                            <NumericUpDown x:Name="AngleBox" Minimum="0" Maximum="180" Value="60" Increment="1"
+                                           Width="160" />
+                        </StackPanel>
+
+                        <TextBlock Text="Правила (по одному на строку)" />
+                        <TextBox x:Name="RulesBox"
+                                 Height="96"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 Text="F=F-F++F-F"
+                                 Watermark="F=F-F++F-F"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+                        <StackPanel Spacing="4">
+                            <Button x:Name="ApplyGenBtn" Content="Применить алгоритм" />
+                            <TextBlock x:Name="GenInfo" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <TextBlock Text="Управление" FontWeight="Bold" />
                     <StackPanel Margin="8,4,8,8" Spacing="4">
-                        <TextBlock Text="• Колесо мыши — приближение/отдаление" TextWrapping="Wrap" />
-                        <TextBlock Text="• Зажмите ЛКМ и тяните — панорама" TextWrapping="Wrap" />
+                        <TextBlock Text="• Колесо мыши — приближение/отдаление" />
+                        <TextBlock Text="• Зажмите ЛКМ и тяните — панорама" />
+                        <TextBlock Text="• Минимальный зум — 'вся снежинка'" />
                     </StackPanel>
-
-                    <Separator />
 
                     <TextBlock Text="Отладка" FontWeight="Bold" />
                     <StackPanel Margin="8,4,8,8" Spacing="4">
-                        <TextBlock x:Name="DbgIter" TextWrapping="Wrap" />
-                        <TextBlock x:Name="DbgZoom" TextWrapping="Wrap" />
-                        <TextBlock x:Name="DbgVerts" TextWrapping="Wrap" />
+                        <TextBlock x:Name="DbgIter" Text="Итерации: 4" />
+                        <TextBlock x:Name="DbgZoom" Text="Зум: ×1.00" />
+                        <TextBlock x:Name="DbgVerts" Text="Вершин: 12" />
+                        <TextBlock x:Name="DbgGenSeg" Text="Сегментов генератора: 4" />
                     </StackPanel>
 
                 </StackPanel>
