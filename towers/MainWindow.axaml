@@ -4,7 +4,6 @@
         x:Class="towers.MainWindow"
         Width="980" Height="600"
         Title="Ханойские башни">
-
     <TabControl>
         <TabItem Header="Игра">
             <views:GameView />
