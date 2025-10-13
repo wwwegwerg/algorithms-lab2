@@ -10,7 +10,7 @@
     <Grid ColumnDefinitions="*,300">
         <local:FractalCanvas x:Name="Canvas"
                              Grid.Column="0"
-                             FitPadding="24" />
+                             FitPadding="50" />
 
         <Border Grid.Column="1" Background="{DynamicResource ThemeControlLowBrush}" Padding="16">
             <Border.Styles>
@@ -55,7 +55,7 @@
                                            Width="160" />
                         </StackPanel>
 
-                        <TextBlock Text="Правила (по одному на строку)" />
+                        <TextBlock Text="Правила (по одному на строку; CCW)" />
                         <TextBox x:Name="RulesBox"
                                  Height="96"
                                  AcceptsReturn="True"
