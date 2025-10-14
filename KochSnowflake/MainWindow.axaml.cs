@@ -75,9 +75,6 @@ public partial class MainWindow : Window
             else RestoreDefaultGenerator();
         };
 
-        if (_useCustomGen.IsChecked == true) TryApplyGenerator();
-        else RestoreDefaultGenerator();
-
         _canvas.ViewChanged += (_, _) => UpdateDebug();
         _canvas.IterationsChanged += (_, _) => UpdateDebug();
         _canvas.GeneratorChanged += (_, _) => UpdateDebug();
@@ -127,7 +124,7 @@ public partial class MainWindow : Window
     private void RestoreDefaultGenerator()
     {
         _canvas.SetGenerator(FractalCanvas.DefaultKochGenerator());
-        _genInfo.Text = "Стандартный Кох";
+        _genInfo.Text = "Включите использование пользовательского генератора";
         UpdateDebug();
     }
 
