@@ -16,7 +16,6 @@ public partial class MainWindow : Window
     private readonly TextBlock _dbgVerts;
     private readonly TextBlock _dbgGenSeg;
 
-    // Пользовательский генератор
     private readonly CheckBox _useCustomGen;
     private readonly TextBox _axiomBox;
     private readonly NumericUpDown _angleBox;
@@ -59,7 +58,6 @@ public partial class MainWindow : Window
             var newVal = (int)e.NewValue!;
             if (newVal == 2)
             {
-                // Если крутили вверх к 2 — прыгаем на 3, если вниз — на 1.
                 newVal = e.OldValue < e.NewValue ? 3 : 1;
                 _sidesUpDown.Value = newVal;
             }

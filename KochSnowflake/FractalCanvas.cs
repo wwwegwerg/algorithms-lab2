@@ -36,7 +36,6 @@ public class FractalCanvas : Control
         }
     }
 
-    // Генератор (локальные координаты 0..1 по X)
     private List<Point> _generator = DefaultKochGenerator();
 
     public event EventHandler? ViewChanged;
@@ -57,7 +56,6 @@ public class FractalCanvas : Control
         Focusable = true;
         ClipToBounds = true;
 
-        // Изменение размеров
         this.GetObservable(BoundsProperty).Subscribe(_ =>
         {
             if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
@@ -84,10 +82,9 @@ public class FractalCanvas : Control
             ViewChanged?.Invoke(this, EventArgs.Empty);
         });
 
-        // Количество сторон — перестроить мир, вид не сбрасывать
         this.GetObservable(BaseSidesProperty).Subscribe(_ =>
         {
-            RebuildWorld(preserveView: true);
+            RebuildWorld();
             InvalidateVisual();
             ViewChanged?.Invoke(this, EventArgs.Empty);
         });
@@ -130,7 +127,7 @@ public class FractalCanvas : Control
         if (normalizedGenerator.Count < 2) return;
 
         _generator = normalizedGenerator;
-        RebuildWorld(preserveView: true);
+        RebuildWorld();
         GeneratorChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -197,7 +194,7 @@ public class FractalCanvas : Control
         _scale = newScale;
         _offset = new Vector(
             sp.X - worldAtCursor.X * _scale,
-            sp.Y - worldAtCursor.Y * _scale
+            sp.Y + worldAtCursor.Y * _scale
         );
 
         InvalidateVisual();
@@ -236,7 +233,6 @@ public class FractalCanvas : Control
         ctx.DrawGeometry(null, pen, geo);
     }
 
-    // Построение
     private void RebuildWorld(bool preserveView = false)
     {
         _world = BuildSnowflake(_iterations, BaseSides);
@@ -254,8 +250,8 @@ public class FractalCanvas : Control
     {
         if (sides <= 1)
         {
-            var a = new Point(0, 0);
-            var b = new Point(1, 0);
+            var a = new Point(1, 0);
+            var b = new Point(0, 0);
             var pts = new List<Point>();
             ExpandEdge(a, b, iterations, pts);
             pts.Add(b); // добавляем конец
@@ -263,7 +259,6 @@ public class FractalCanvas : Control
         }
         else
         {
-            // Правильный n-угольник: замкнутая снежинка
             var poly = BuildRegularPolygon(sides);
             var gSeg = Math.Max(1, GeneratorSegments);
 
@@ -276,7 +271,7 @@ public class FractalCanvas : Control
                 ExpandEdge(a, b, iterations, pts);
             }
 
-            pts.Add(poly[0]); // замыкаем
+            pts.Add(poly[0]); // добавляем конец
             return pts;
         }
     }
@@ -339,9 +334,12 @@ public class FractalCanvas : Control
 
         _minScale = _scale = Math.Min(vw / _boundsWorld.Width, vh / _boundsWorld.Height);
 
+        var wc = _boundsWorld.Center;
+        var sc = new Point(pad + vw / 2.0, pad + vh / 2.0);
+
         _offset = new Vector(
-            pad + (vw - _boundsWorld.Width * _scale) / 2.0 - _boundsWorld.X * _scale,
-            pad + (vh - _boundsWorld.Height * _scale) / 2.0 - _boundsWorld.Y * _scale
+            sc.X - wc.X * _scale,
+            sc.Y + wc.Y * _scale
         );
     }
 
@@ -362,7 +360,11 @@ public class FractalCanvas : Control
 
         if (!(_scale < _minScale)) return;
         _scale = _minScale;
-        _offset = centerScreen - new Vector(worldAtCenter.X * _scale, worldAtCenter.Y * _scale);
+
+        _offset = new Vector(
+            centerScreen.X - worldAtCenter.X * _scale,
+            centerScreen.Y + worldAtCenter.Y * _scale
+        );
     }
 
     private static Rect ComputeBounds(List<Point> pts)
@@ -383,6 +385,14 @@ public class FractalCanvas : Control
         return new Rect(minX, minY, Math.Max(1e-9, maxX - minX), Math.Max(1e-9, maxY - minY));
     }
 
-    private Point WorldToScreen(Point w) => new(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
-    private Point ScreenToWorld(Point s) => new((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
+    // переворачиваем ось Y т.к. в avalonia она смотрит вниз
+    private Point WorldToScreen(Point w) => new(
+        w.X * _scale + _offset.X,
+        -w.Y * _scale + _offset.Y
+    );
+
+    private Point ScreenToWorld(Point s) => new(
+        (s.X - _offset.X) / _scale,
+        -(s.Y - _offset.Y) / _scale
+    );
 }

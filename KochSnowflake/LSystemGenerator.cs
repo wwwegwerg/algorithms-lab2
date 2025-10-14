@@ -5,14 +5,6 @@ using Avalonia;
 
 namespace KochSnowflake;
 
-/// <summary>
-/// Простой L-системный конструктор генераторного полилиния.
-/// Поддерживает символы:
-///   F — шаг вперёд с рисованием;
-///   + — поворот влево на угол;
-///   - — поворот вправо на угол;
-///   Любые другие символы участвуют в переписывании, но игнорируются при рисовании.
-/// </summary>
 public static class LSystemGenerator
 {
     public static List<Point> BuildNormalizedGenerator(
@@ -32,7 +24,6 @@ public static class LSystemGenerator
         var poly = TurtleToPolyline(current, angleDegrees);
         var normalized = Normalize(poly);
 
-        // Генератор должен быть хотя бы из двух точек
         if (normalized.Count < 2)
             throw new InvalidOperationException("Порожденный генератор пуст или вырожден.");
 
@@ -47,7 +38,6 @@ public static class LSystemGenerator
             var line = raw.Trim();
             if (string.IsNullOrEmpty(line)) continue;
 
-            // Поддержка форматов: F=F+F--F+F ИЛИ F -> F+F--F+F
             var parts = line.Split(["->", "="], StringSplitOptions.None);
             if (parts.Length != 2) continue;
 
@@ -108,10 +98,6 @@ public static class LSystemGenerator
         return pts;
     }
 
-    /// <summary>
-    /// Переносит начало в (0,0), поворачивает так, чтобы конец лёг на ось X,
-    /// и масштабирует так, чтобы длина была 1. Конец становится близко к (1,0).
-    /// </summary>
     private static List<Point> Normalize(IReadOnlyList<Point> pts)
     {
         if (pts.Count < 2)
