@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
@@ -41,7 +39,6 @@ public partial class MainWindow : Window
         _dbgGenSeg = this.FindControl<TextBlock>("DbgGenSeg")!;
 
         _useCustomGen = this.FindControl<CheckBox>("UseCustomGen")!;
-        _angleBox = null!;
         _axiomBox = this.FindControl<TextBox>("AxiomBox")!;
         _angleBox = this.FindControl<NumericUpDown>("AngleBox")!;
         _rulesBox = this.FindControl<TextBox>("RulesBox")!;
@@ -103,8 +100,7 @@ public partial class MainWindow : Window
         {
             var axiom = _axiomBox.Text ?? "F";
             var angle = (double)_angleBox.Value!;
-            // шаг развёртки фиксируем = 1 (по твоему требованию)
-            var expandSteps = 1;
+            const int expandSteps = 1;
 
             var rules = (_rulesBox.Text ?? "")
                 .Replace("\r\n", "\n")
@@ -124,16 +120,7 @@ public partial class MainWindow : Window
 
     private void RestoreDefaultGenerator()
     {
-        var h = Math.Sqrt(3) / 6.0;
-        var def = new List<Point>
-        {
-            new(0, 0),
-            new(1.0 / 3.0, 0),
-            new(0.5, -h),
-            new(2.0 / 3.0, 0),
-            new(1, 0),
-        };
-        _canvas.SetGenerator(def);
+        _canvas.SetGenerator(FractalCanvas.DefaultKochGenerator());
         _genInfo.Text = "Стандартный Кох";
         UpdateDebug();
     }

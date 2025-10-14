@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Avalonia;
 
 namespace KochSnowflake;
@@ -23,7 +24,7 @@ public static class LSystemGenerator
         if (expandSteps < 1) expandSteps = 1;
 
         var rules = ParseRules(ruleLines);
-        string current = axiom ?? "F";
+        var current = axiom;
 
         for (var i = 0; i < expandSteps; i++)
             current = Rewrite(current, rules);
@@ -41,9 +42,9 @@ public static class LSystemGenerator
     private static Dictionary<char, string> ParseRules(IEnumerable<string> lines)
     {
         var dict = new Dictionary<char, string>();
-        foreach (var raw in lines ?? [])
+        foreach (var raw in lines)
         {
-            var line = (raw ?? "").Trim();
+            var line = raw.Trim();
             if (string.IsNullOrEmpty(line)) continue;
 
             // Поддержка форматов: F=F+F--F+F ИЛИ F -> F+F--F+F
@@ -65,7 +66,7 @@ public static class LSystemGenerator
     private static string Rewrite(string s, Dictionary<char, string> rules)
     {
         if (string.IsNullOrEmpty(s)) return s;
-        var result = new System.Text.StringBuilder(s.Length * 2);
+        var result = new StringBuilder(s.Length * 2);
         foreach (var ch in s)
         {
             if (rules.TryGetValue(ch, out var repl)) result.Append(repl);
@@ -78,7 +79,7 @@ public static class LSystemGenerator
     private static List<Point> TurtleToPolyline(string commands, double angleDeg)
     {
         var ang = 0.0; // направление в радианах, 0 — вдоль +X
-        var step = 1.0;
+        const double step = 1.0;
         var angle = angleDeg * Math.PI / 180.0;
 
         var p = new Point(0, 0);
@@ -100,9 +101,6 @@ public static class LSystemGenerator
                 case '-':
                     ang -= angle;
                     break;
-                default:
-                    // прочие символы игнорируем на этапе рисования
-                    break;
             }
         }
 
@@ -121,22 +119,22 @@ public static class LSystemGenerator
         var a = pts[0];
         var b = pts[^1];
         double dx = b.X - a.X, dy = b.Y - a.Y;
-        double len = Math.Sqrt(dx * dx + dy * dy);
+        var len = Math.Sqrt(dx * dx + dy * dy);
         if (len < 1e-12)
             throw new InvalidOperationException("Генератор замкнут или вырожден (длина = 0).");
 
-        double cos = dx / len;
-        double sin = dy / len;
+        var cos = dx / len;
+        var sin = dy / len;
 
         var outPts = new List<Point>(pts.Count);
         foreach (var p in pts)
         {
             // перенос
-            double x = p.X - a.X;
-            double y = p.Y - a.Y;
+            var x = p.X - a.X;
+            var y = p.Y - a.Y;
             // поворот на -theta (чтобы вектор лег на +X)
-            double xr = x * cos + y * sin;
-            double yr = -x * sin + y * cos;
+            var xr = x * cos + y * sin;
+            var yr = -x * sin + y * cos;
             // масштаб к длине 1
             outPts.Add(new Point(xr / len, yr / len));
         }

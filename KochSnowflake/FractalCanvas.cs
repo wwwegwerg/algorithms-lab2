@@ -123,8 +123,6 @@ public class FractalCanvas : Control
 
     public void SetGenerator(List<Point> normalizedGenerator)
     {
-        // if (normalizedGenerator == null || normalizedGenerator.Count < 2)
-        //     return;
         if (normalizedGenerator.Count < 2) return;
 
         _generator = normalizedGenerator;
@@ -351,16 +349,16 @@ public class FractalCanvas : Control
             if (p.Y > maxY) maxY = p.Y;
         }
 
-        if (double.IsInfinity(minX)) return new Rect(0, 0, 1, 1);
+        if (double.IsInfinity(minX))
+            return new Rect(0, 0, 1, 1);
         return new Rect(minX, minY, Math.Max(1e-9, maxX - minX), Math.Max(1e-9, maxY - minY));
     }
 
     private Point WorldToScreen(Point w) => new(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
     private Point ScreenToWorld(Point s) => new((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
 
-    private static List<Point> DefaultKochGenerator()
+    public static List<Point> DefaultKochGenerator()
     {
-        // Классический "наружу" для CCW: "бугор" справа (локальная Y < 0)
         var h = Math.Sqrt(3) / 6.0;
         return
         [
