@@ -80,10 +80,10 @@
 
                     <TextBlock Text="Отладка" FontWeight="Bold" />
                     <StackPanel Margin="8,4,8,8" Spacing="4">
-                        <TextBlock x:Name="DbgIter" Text="Итерации: 4" />
-                        <TextBlock x:Name="DbgZoom" Text="Зум: ×1.00" />
-                        <TextBlock x:Name="DbgVerts" Text="Вершин: 12" />
-                        <TextBlock x:Name="DbgGenSeg" Text="Сегментов генератора: 4" />
+                        <TextBlock x:Name="DbgIter" />
+                        <TextBlock x:Name="DbgZoom" />
+                        <TextBlock x:Name="DbgVerts" />
+                        <TextBlock x:Name="DbgGenSeg" />
                     </StackPanel>
 
                 </StackPanel>
