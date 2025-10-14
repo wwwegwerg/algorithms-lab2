@@ -22,14 +22,18 @@ public class FractalCanvas : Control
 
     private int _iterations = 4;
 
-    // Базовая фигура: число сторон (3..10)
     private static readonly StyledProperty<int> BaseSidesProperty =
         AvaloniaProperty.Register<FractalCanvas, int>(nameof(BaseSides), 3);
 
     public int BaseSides
     {
         get => GetValue(BaseSidesProperty);
-        set => SetValue(BaseSidesProperty, Math.Clamp(value, 3, 10));
+        set
+        {
+            var v = Math.Clamp(value, 1, 10);
+            if (v == 2) v = 1;
+            SetValue(BaseSidesProperty, v);
+        }
     }
 
     // Генератор (локальные координаты 0..1 по X)
@@ -118,7 +122,7 @@ public class FractalCanvas : Control
     }
 
     public double ZoomFactor => _minScale > 0 ? _scale / _minScale : 1.0;
-    public int VertexCount => _world.Count - 1;
+    public int VertexCount => _world.Count;
     public int GeneratorSegments => Math.Max(0, _generator.Count - 1);
 
     public void SetGenerator(List<Point> normalizedGenerator)
@@ -215,6 +219,7 @@ public class FractalCanvas : Control
         }
 
         var pen = new Pen(Brushes.Black, 1.0, lineCap: PenLineCap.Round);
+        var isClosed = BaseSides > 1;
 
         var geo = new StreamGeometry();
         using (var g = geo.Open())
@@ -225,7 +230,7 @@ public class FractalCanvas : Control
             for (var i = 1; i < _world.Count; i++)
                 g.LineTo(WorldToScreen(_world[i]));
 
-            g.EndFigure(isClosed: true);
+            g.EndFigure(isClosed: isClosed);
         }
 
         ctx.DrawGeometry(null, pen, geo);
@@ -247,26 +252,39 @@ public class FractalCanvas : Control
 
     private List<Point> BuildSnowflake(int iterations, int sides)
     {
-        var poly = BuildRegularPolygon(sides);
-        var gSeg = Math.Max(1, GeneratorSegments);
-
-        var pts = new List<Point>(sides * (int)Math.Pow(gSeg, Math.Max(0, iterations)) + 1);
-
-        for (var i = 0; i < poly.Count; i++)
+        if (sides <= 1)
         {
-            var a = poly[i];
-            var b = poly[(i + 1) % poly.Count];
+            var a = new Point(0, 0);
+            var b = new Point(1, 0);
+            var pts = new List<Point>();
             ExpandEdge(a, b, iterations, pts);
+            pts.Add(b); // добавляем конец
+            return pts;
         }
+        else
+        {
+            // Правильный n-угольник: замкнутая снежинка
+            var poly = BuildRegularPolygon(sides);
+            var gSeg = Math.Max(1, GeneratorSegments);
 
-        pts.Add(poly[0]); // замыкаем
-        return pts;
+            var pts = new List<Point>(sides * (int)Math.Pow(gSeg, Math.Max(0, iterations)) + 1);
+
+            for (var i = 0; i < poly.Count; i++)
+            {
+                var a = poly[i];
+                var b = poly[(i + 1) % poly.Count];
+                ExpandEdge(a, b, iterations, pts);
+            }
+
+            pts.Add(poly[0]); // замыкаем
+            return pts;
+        }
     }
 
     private static List<Point> BuildRegularPolygon(int sides)
     {
         const double R = 1.0; // радиус описанной окружности
-        const double start = -Math.PI / 2.0; // «вершина вверх»
+        const double start = -Math.PI / 2.0; // вершина вверх
         var list = new List<Point>(sides);
         for (var i = 0; i < sides; i++)
         {

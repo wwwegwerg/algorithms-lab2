@@ -56,7 +56,15 @@ public partial class MainWindow : Window
 
         _sidesUpDown.ValueChanged += (_, e) =>
         {
-            _canvas.BaseSides = (int)e.NewValue!;
+            var newVal = (int)e.NewValue!;
+            if (newVal == 2)
+            {
+                // Если крутили вверх к 2 — прыгаем на 3, если вниз — на 1.
+                newVal = e.OldValue < e.NewValue ? 3 : 1;
+                _sidesUpDown.Value = newVal;
+            }
+
+            _canvas.BaseSides = newVal;
             UpdateDebug();
         };
 
@@ -108,7 +116,7 @@ public partial class MainWindow : Window
 
             var gen = LSystemGenerator.BuildNormalizedGenerator(axiom, rules, angle, expandSteps);
             _canvas.SetGenerator(gen);
-            _genInfo.Text = $"OK • сегментов: {Math.Max(0, gen.Count - 1)}";
+            _genInfo.Text = "OK";
         }
         catch (Exception ex)
         {
