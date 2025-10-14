@@ -137,6 +137,19 @@ public class FractalCanvas : Control
         ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public static List<Point> DefaultKochGenerator()
+    {
+        var h = Math.Sqrt(3) / 6.0;
+        return
+        [
+            new Point(0, 0),
+            new Point(1.0 / 3.0, 0),
+            new Point(0.5, -h),
+            new Point(2.0 / 3.0, 0),
+            new Point(1, 0)
+        ];
+    }
+
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
@@ -237,7 +250,7 @@ public class FractalCanvas : Control
         var poly = BuildRegularPolygon(sides);
         var gSeg = Math.Max(1, GeneratorSegments);
 
-        var pts = new List<Point>(capacity: sides * (int)Math.Pow(gSeg, Math.Max(0, iterations)) + 1);
+        var pts = new List<Point>(sides * (int)Math.Pow(gSeg, Math.Max(0, iterations)) + 1);
 
         for (var i = 0; i < poly.Count; i++)
         {
@@ -246,9 +259,22 @@ public class FractalCanvas : Control
             ExpandEdge(a, b, iterations, pts);
         }
 
-        // замкнуть
-        pts.Add(poly[0]);
+        pts.Add(poly[0]); // замыкаем
         return pts;
+    }
+
+    private static List<Point> BuildRegularPolygon(int sides)
+    {
+        const double R = 1.0; // радиус описанной окружности
+        const double start = -Math.PI / 2.0; // «вершина вверх»
+        var list = new List<Point>(sides);
+        for (var i = 0; i < sides; i++)
+        {
+            var ang = start + 2 * Math.PI * i / sides; // CCW
+            list.Add(new Point(R * Math.Cos(ang), R * Math.Sin(ang)));
+        }
+
+        return list;
     }
 
     private void ExpandEdge(Point a, Point b, int depth, List<Point> output)
@@ -282,21 +308,6 @@ public class FractalCanvas : Control
         }
 
         return res;
-    }
-
-    private static List<Point> BuildRegularPolygon(int sides)
-    {
-        sides = Math.Clamp(sides, 3, 10);
-        const double R = 1.0; // радиус описанной окружности
-        var start = -Math.PI / 2.0; // «вершина вверх»
-        var list = new List<Point>(sides);
-        for (var i = 0; i < sides; i++)
-        {
-            var ang = start + 2 * Math.PI * i / sides; // CCW
-            list.Add(new Point(R * Math.Cos(ang), R * Math.Sin(ang)));
-        }
-
-        return list;
     }
 
     private void FitToView()
@@ -356,17 +367,4 @@ public class FractalCanvas : Control
 
     private Point WorldToScreen(Point w) => new(w.X * _scale + _offset.X, w.Y * _scale + _offset.Y);
     private Point ScreenToWorld(Point s) => new((s.X - _offset.X) / _scale, (s.Y - _offset.Y) / _scale);
-
-    public static List<Point> DefaultKochGenerator()
-    {
-        var h = Math.Sqrt(3) / 6.0;
-        return
-        [
-            new Point(0, 0),
-            new Point(1.0 / 3.0, 0),
-            new Point(0.5, -h),
-            new Point(2.0 / 3.0, 0),
-            new Point(1, 0)
-        ];
-    }
 }

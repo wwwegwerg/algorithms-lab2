@@ -90,8 +90,6 @@ public static class LSystemGenerator
             switch (ch)
             {
                 case 'F':
-                // case 'A':
-                // case 'B':
                     p = new Point(p.X + step * Math.Cos(ang), p.Y + step * Math.Sin(ang));
                     pts.Add(p);
                     break;
