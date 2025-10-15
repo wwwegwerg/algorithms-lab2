@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly TextBlock _dbgZoom;
     private readonly TextBlock _dbgVerts;
     private readonly TextBlock _dbgGenSeg;
+    private readonly TextBlock _dbgCplx;
 
     private readonly CheckBox _useCustomGen;
     private readonly TextBox _axiomBox;
@@ -36,6 +37,7 @@ public partial class MainWindow : Window
         _dbgZoom = this.FindControl<TextBlock>("DbgZoom")!;
         _dbgVerts = this.FindControl<TextBlock>("DbgVerts")!;
         _dbgGenSeg = this.FindControl<TextBlock>("DbgGenSeg")!;
+        _dbgCplx = this.FindControl<TextBlock>("DbgCplx")!;
 
         _useCustomGen = this.FindControl<CheckBox>("UseCustomGen")!;
         _axiomBox = this.FindControl<TextBox>("AxiomBox")!;
@@ -134,5 +136,6 @@ public partial class MainWindow : Window
         _dbgZoom.Text = $"Зум: ×{_canvas.ZoomFactor:0.00}";
         _dbgVerts.Text = $"Вершин: {_canvas.VertexCount:N0}";
         _dbgGenSeg.Text = $"Сегментов генератора: {_canvas.GeneratorSegments}";
+        _dbgCplx.Text = $"Сложность: {_canvas.BaseSides} * {_canvas.GeneratorSegments}^N + 1";
     }
 }

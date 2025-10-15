@@ -95,6 +95,7 @@
                         <TextBlock x:Name="DbgZoom" />
                         <TextBlock x:Name="DbgVerts" />
                         <TextBlock x:Name="DbgGenSeg" />
+                        <TextBlock x:Name="DbgCplx" />
                     </StackPanel>
 
                 </StackPanel>
