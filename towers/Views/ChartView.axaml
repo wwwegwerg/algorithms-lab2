@@ -6,7 +6,5 @@
         <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml" />
     </UserControl.Styles>
 
-    <Grid Margin="10">
-        <oxy:PlotView x:Name="Plot" MinHeight="320" />
-    </Grid>
+    <oxy:PlotView x:Name="Plot" />
 </UserControl>

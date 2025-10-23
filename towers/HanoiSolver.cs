@@ -16,7 +16,12 @@ public static class HanoiSolver
     public static List<(int from, int to)> GenerateMoves(int n, int from = 0, int to = 2, int aux = 1)
     {
         var moves = new List<(int, int)>();
-        Solve(n, from, to, aux, (f, t) => moves.Add((f, t)));
+        Solve(n, from, to, aux, (f, t) =>
+        {
+            Console.WriteLine($"{f} -> {t}");
+            moves.Add((f, t));
+        });
+        Console.WriteLine();
         return moves;
     }
 }

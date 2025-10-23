@@ -345,7 +345,7 @@ public partial class GameView : UserControl
     {
         var anim = new Animation
         {
-            Duration = TimeSpan.FromMilliseconds(500),
+            Duration = TimeSpan.FromMilliseconds(700),
             Easing = new SineEaseInOut(),
             FillMode = FillMode.Forward
         };
